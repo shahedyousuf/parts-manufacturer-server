@@ -17,6 +17,7 @@ async function run() {
     try {
         await client.connect();
         const partsCollection = client.db('camera-parts-manufacturer').collection('parts');
+        const orderCollection = client.db('camera-parts-manufacturer').collection('orders');
 
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -30,6 +31,8 @@ async function run() {
             const part = await partsCollection.findOne(query);
             res.send(part);
         })
+
+
     }
     finally {
 
