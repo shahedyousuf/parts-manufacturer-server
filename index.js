@@ -63,7 +63,7 @@ async function run() {
 
         })
 
-        app.get('/order', async (req, res) => {
+        app.get('/orders', async (req, res) => {
             const orders = await orderCollection.find().toArray();
             res.send(orders);
         })
@@ -72,6 +72,37 @@ async function run() {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
             res.send(result);
+        })
+
+        app.get('/user', verifyJWT, async (req, res) => {
+            const user = req.body;
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.get('/admin/:userEmail', async (req, res) => {
+            const userEmail = req.params.userEmail;
+            const user = await userCollection.findOne({ userEmail: userEmail });
+            const isAdmin = userEmail.role === 'admin';
+            res.send(isAdmin);
+        })
+
+        app.put('/user/admin/:userEmail', verifyJWT, async (req, res) => {
+            const userEmail = req.params.userEmail;
+            const requester = req.decoded.userEmail;
+            const requesterAccount = await userCollection.findOne({ userEmail: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { userEmail: userEmail };
+                const updatedDoc = {
+                    $set: { role: 'admin' }
+                };
+                const result = await userCollection.updateOne(filter, updatedDoc);
+                res.send(result);
+            }
+            else {
+                res.status(403).send({ message: 'Forbidden' });
+            }
+
         })
 
         app.put('/user/:userEmail', async (req, res) => {
@@ -86,6 +117,8 @@ async function run() {
             const token = jwt.sign({ userEmail: userEmail }, process.env.ACCESS_TOKEN, { expiresIn: '1h' })
             res.send({ result, token });
         })
+
+
     }
     finally {
 
